@@ -82,16 +82,29 @@ export const JewelryCard = ({ item, onEdit, onDelete, onView, onAddToCart, showA
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => onView(item)}>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onView(item);
+                    }}
+                  >
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onEdit(item)}>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(item);
+                    }}
+                  >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Item
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => onDelete(item.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(item.id);
+                    }}
                     className="text-destructive"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />

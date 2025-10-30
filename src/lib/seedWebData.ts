@@ -4,13 +4,18 @@ export async function seedWebData() {
   try {
     console.log('Seeding web application data...');
 
-    // Seed jewelry items
+    // Seed jewelry items (with all required fields for JewelryItem interface)
     const jewelryItems = [
       {
         id: 'jewelry-1',
         name: 'Gold Ring',
-        description: 'Beautiful 18K gold ring with diamond',
+        type: 'Ring',
+        gemstone: 'Diamond',
+        carat: 1.5,
+        metal: 'Gold 18K',
         price: 15000,
+        inStock: 10,
+        isArtificial: false,
         image: '💍',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -18,8 +23,13 @@ export async function seedWebData() {
       {
         id: 'jewelry-2',
         name: 'Silver Necklace',
-        description: 'Elegant silver necklace with pendant',
+        type: 'Necklace',
+        gemstone: 'Pearl',
+        carat: 0,
+        metal: 'Silver',
         price: 8000,
+        inStock: 8,
+        isArtificial: false,
         image: '📿',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -27,8 +37,13 @@ export async function seedWebData() {
       {
         id: 'jewelry-3',
         name: 'Diamond Earrings',
-        description: 'Stunning diamond stud earrings',
+        type: 'Earrings',
+        gemstone: 'Diamond',
+        carat: 2.0,
+        metal: 'Platinum',
         price: 25000,
+        inStock: 5,
+        isArtificial: false,
         image: '💎',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -43,6 +58,8 @@ export async function seedWebData() {
         weight: '10g',
         purity: '18K',
         price: 50000,
+        stock: 15,
+        inStock: 15, // Add both for compatibility
         image: '🥇',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -53,6 +70,8 @@ export async function seedWebData() {
         weight: '25g',
         purity: '22K',
         price: 120000,
+        stock: 12,
+        inStock: 12, // Add both for compatibility
         image: '⛓️',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -68,6 +87,8 @@ export async function seedWebData() {
         clarity: 'FL',
         cut: 'Round',
         price: 250000,
+        stock: 20,
+        inStock: 20, // Add both for compatibility
         image: '💎',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -79,6 +100,8 @@ export async function seedWebData() {
         clarity: 'VVS1',
         cut: 'Oval',
         price: 180000,
+        stock: 18,
+        inStock: 18, // Add both for compatibility
         image: '🔴',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),

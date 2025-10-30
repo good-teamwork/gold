@@ -6,6 +6,8 @@ import { Outlet } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { getSupabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { syncAll } from "@/lib/sync";
 
 export const Layout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -14,6 +16,44 @@ export const Layout = () => {
   const isAuthRoute = location.pathname === "/auth";
   const supabase = getSupabase();
   const { toast } = useToast();
+
+  // Background auto-sync: on load, every 45 minutes, on visibility/online
+  useEffect(() => {
+    let cancelled = false;
+    const runSync = async () => {
+      try {
+        if (isAuthRoute) return;
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) return;
+        if (!cancelled) {
+          await syncAll();
+        }
+      } catch (_e) {
+        // ignore sync errors; will retry later
+      }
+    };
+
+    // initial sync
+    runSync();
+
+    // periodic sync every ~45 minutes
+    const intervalId = window.setInterval(runSync, 45 * 60 * 1000);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") runSync();
+    };
+    const onOnline = () => runSync();
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("online", onOnline);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("online", onOnline);
+    };
+  }, [isAuthRoute, supabase]);
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);

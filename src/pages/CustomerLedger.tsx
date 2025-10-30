@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useOfflineStorage } from "@/hooks/useOfflineStorage";
 import { CustomerDetailsDialog } from "@/components/CustomerDetailsDialog";
+import { enqueueChange } from "@/lib/sync";
 
 interface Customer {
   id: string;
@@ -134,6 +135,22 @@ export const CustomerLedger = () => {
     };
 
     setCustomers(prev => [...prev, newCustomer]);
+
+    // Push to Supabase
+    enqueueChange('customers', 'upsert', {
+      id: newCustomer.id,
+      name: newCustomer.name,
+      email: newCustomer.email,
+      phone: newCustomer.phone,
+      address: newCustomer.address,
+      credit_limit: newCustomer.creditLimit,
+      current_balance: newCustomer.currentBalance,
+      total_purchases: newCustomer.totalPurchases,
+      last_purchase_date: newCustomer.lastPurchaseDate || null,
+      status: newCustomer.status,
+      updated_at: new Date().toISOString(),
+    });
+
     setFormData({ name: "", phone: "", email: "", address: "", creditLimit: "" });
     setShowAddDialog(false);
     
@@ -166,7 +183,20 @@ export const CustomerLedger = () => {
 
     setTransactions(prev => [...prev, newTransaction]);
 
-    // Update customer balance
+    // Push transaction
+    enqueueChange('customer_transactions', 'upsert', {
+      id: newTransaction.id,
+      customer_id: newTransaction.customerId,
+      type: newTransaction.type,
+      amount: newTransaction.amount,
+      description: newTransaction.description,
+      date: newTransaction.date,
+      invoice_id: newTransaction.invoiceId ?? null,
+      payment_method: newTransaction.paymentMethod ?? null,
+      updated_at: new Date().toISOString(),
+    });
+
+    // Update customer balance and totals, then push customer
     setCustomers(prev => prev.map(customer => 
       customer.id === selectedCustomer.id
         ? {
@@ -181,6 +211,22 @@ export const CustomerLedger = () => {
           }
         : customer
     ));
+
+    // After local update, enqueue latest customer snapshot
+    const updatedAt = new Date().toISOString();
+    enqueueChange('customers', 'upsert', {
+      id: selectedCustomer.id,
+      name: selectedCustomer.name,
+      email: selectedCustomer.email,
+      phone: selectedCustomer.phone,
+      address: selectedCustomer.address,
+      credit_limit: selectedCustomer.creditLimit,
+      current_balance: (selectedCustomer.currentBalance || 0) + newTransaction.amount,
+      total_purchases: selectedCustomer.totalPurchases + (transactionData.type === 'purchase' ? amount : 0),
+      last_purchase_date: transactionData.type === 'purchase' ? new Date().toISOString().split('T')[0] : selectedCustomer.lastPurchaseDate,
+      status: selectedCustomer.status,
+      updated_at: updatedAt,
+    });
 
     setTransactionData({ type: 'payment', amount: "", description: "", paymentMethod: "Cash" });
     setShowTransactionDialog(false);
@@ -467,7 +513,7 @@ export const CustomerLedger = () => {
               <select
                 id="payment-method"
                 value={transactionData.paymentMethod}
-                onChange={(e) => setTransactionData(prev => ({...prev, paymentMethod: e.target.value}))}
+                onValueChange={(value) => setTransactionData(prev => ({...prev, paymentMethod: value}))}
                 className="w-full p-2 border rounded-md"
               >
                 <option value="Cash">Cash</option>
@@ -499,3 +545,4 @@ export const CustomerLedger = () => {
   );
 };
 
+export default CustomerLedger;

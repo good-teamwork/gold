@@ -54,16 +54,30 @@ export const EditItemDialog = ({ open, onOpenChange, onSave, item }: EditItemDia
 
   useEffect(() => {
     if (item && open) {
+      // Initialize form with item data, with proper defaults
       setFormData({
-        name: item.name,
-        type: item.type,
-        gemstone: item.gemstone,
-        carat: item.carat.toString(),
-        metal: item.metal,
-        price: item.price.toString(),
-        inStock: item.inStock.toString(),
+        name: item.name || "",
+        type: item.type || jewelryTypes[0] || "Ring", // Default to first available type
+        gemstone: item.gemstone || "None",
+        carat: (item.carat !== undefined && item.carat !== null) ? item.carat.toString() : "",
+        metal: item.metal || metals[0] || "Gold 18K", // Default to first available metal
+        price: item.price !== undefined ? item.price.toString() : "",
+        inStock: (item.inStock !== undefined && item.inStock !== null) ? item.inStock.toString() : "",
         isArtificial: item.isArtificial || false,
         image: item.image || "",
+      });
+    } else if (!open && !item) {
+      // Only reset form when dialog closes AND there's no item
+      setFormData({
+        name: "",
+        type: "",
+        gemstone: "",
+        carat: "",
+        metal: "",
+        price: "",
+        inStock: "",
+        isArtificial: false,
+        image: "",
       });
     }
   }, [item, open]);
@@ -90,35 +104,83 @@ export const EditItemDialog = ({ open, onOpenChange, onSave, item }: EditItemDia
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!item || !formData.name || !formData.type || !formData.metal || !formData.price || !formData.inStock) {
+    if (!item) {
+      console.error("No item to save");
+      return;
+    }
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      console.error("Item name is required");
+      return;
+    }
+    
+    if (!formData.type) {
+      console.error("Item type is required");
+      return;
+    }
+    
+    if (!formData.metal) {
+      console.error("Metal is required");
+      return;
+    }
+    
+    if (!formData.price || formData.price.trim() === "") {
+      console.error("Price is required");
       return;
     }
 
-    onSave({
+    const price = parseFloat(formData.price);
+    if (isNaN(price) || price < 0) {
+      console.error("Invalid price");
+      return;
+    }
+    
+    const stock = formData.inStock ? parseInt(formData.inStock) : 0;
+    if (isNaN(stock) || stock < 0) {
+      console.error("Invalid stock quantity");
+      return;
+    }
+
+    const carat = formData.carat && formData.carat.trim() ? parseFloat(formData.carat) : 0;
+
+    const updatedItem: JewelryItem = {
       ...item,
-      name: formData.name,
+      name: formData.name.trim(),
       type: formData.type,
       gemstone: formData.gemstone || "None",
-      carat: formData.carat ? parseFloat(formData.carat) : 0,
+      carat: carat,
       metal: formData.metal,
-      price: parseFloat(formData.price),
-      inStock: parseInt(formData.inStock),
+      price: price,
+      inStock: stock,
       isArtificial: formData.isArtificial,
-      image: formData.image,
-    });
+      image: formData.image || "",
+    };
     
+    console.log("Saving updated item:", updatedItem);
+    onSave(updatedItem);
     onOpenChange(false);
   };
 
-  if (!item) return null;
+  // Don't render dialog if no item, but don't return null before Dialog to avoid white screen
+  // Instead, control the open state via the Dialog's open prop
+  if (!item && open) {
+    // If dialog is trying to open without an item, close it gracefully
+    return null;
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open && !!item} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] bg-card max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">Edit Jewelry Item</DialogTitle>
         </DialogHeader>
         
+        {!item ? (
+          <div className="py-8 text-center text-muted-foreground">
+            <p>No item selected for editing.</p>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Image Upload Section */}
           <div className="space-y-2">
@@ -183,11 +245,13 @@ export const EditItemDialog = ({ open, onOpenChange, onSave, item }: EditItemDia
             <div className="space-y-2">
               <Label htmlFor="edit-type">Type *</Label>
               <Select 
-                value={formData.type} 
+                value={formData.type || ""} 
                 onValueChange={(value) => setFormData(prev => ({...prev, type: value}))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue placeholder="Select type">
+                    {formData.type || "Select type"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {jewelryTypes.map(type => (
@@ -232,11 +296,13 @@ export const EditItemDialog = ({ open, onOpenChange, onSave, item }: EditItemDia
           <div className="space-y-2">
             <Label htmlFor="edit-metal">Metal *</Label>
             <Select 
-              value={formData.metal} 
+              value={formData.metal || ""} 
               onValueChange={(value) => setFormData(prev => ({...prev, metal: value}))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select metal" />
+                <SelectValue placeholder="Select metal">
+                  {formData.metal || "Select metal"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {metals.map(metal => (
@@ -265,6 +331,7 @@ export const EditItemDialog = ({ open, onOpenChange, onSave, item }: EditItemDia
               <Input
                 id="edit-stock"
                 type="number"
+                min="0"
                 value={formData.inStock}
                 onChange={(e) => setFormData(prev => ({...prev, inStock: e.target.value}))}
                 placeholder="e.g., 5"
@@ -298,6 +365,7 @@ export const EditItemDialog = ({ open, onOpenChange, onSave, item }: EditItemDia
             </Button>
           </div>
         </form>
+        )}
       </DialogContent>
     </Dialog>
   );

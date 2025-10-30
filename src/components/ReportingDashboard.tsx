@@ -79,9 +79,9 @@ export const ReportingDashboard = () => {
       expenseBreakdown: {
         inventory: 60,
         salaries: 25,
-        rent: 8,
-        utilities: 4,
-        marketing: 3
+        utilities: 8,
+        marketing: 4,
+        other: 3
       }
     },
     employee: {

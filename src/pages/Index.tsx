@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useOfflineStorage } from "@/hooks/useOfflineStorage";
+import { enqueueChange } from "@/lib/sync";
 import heroImage from "@/assets/hero-jewelry.jpg";
 
 interface CartItem {
@@ -91,18 +92,43 @@ const Index = () => {
   };
 
   const handleEditItem = (item: JewelryItem) => {
-    setEditingItem(item);
-    setShowEditDialog(true);
+    // Ensure item is valid before opening dialog
+    if (item) {
+      setEditingItem(item);
+      setShowEditDialog(true);
+    }
   };
 
   const handleSaveEditedItem = (updatedItem: JewelryItem) => {
     setItems(prev => prev.map(item => 
       item.id === updatedItem.id ? updatedItem : item
     ));
+    
+    // Sync changes to IndexedDB and queue for Supabase sync
+    enqueueChange('inventory_items', 'upsert', {
+      id: updatedItem.id,
+      item_type: 'jewelry',
+      name: updatedItem.name,
+      type: updatedItem.type,
+      gemstone: updatedItem.gemstone,
+      carat: updatedItem.carat,
+      metal: updatedItem.metal,
+      attributes: {
+        description: updatedItem.type, // Use type as description fallback
+        carat: updatedItem.carat,
+      },
+      price: updatedItem.price,
+      inStock: updatedItem.inStock,
+      image: updatedItem.image || "",
+      isArtificial: updatedItem.isArtificial || false,
+      updated_at: new Date().toISOString(),
+    });
+    
     toast({
       title: "Item Updated",
       description: `${updatedItem.name} has been updated successfully.`
     });
+    setShowEditDialog(false);
     setEditingItem(null);
   };
 
@@ -484,7 +510,13 @@ const Index = () => {
 
         <EditItemDialog
           open={showEditDialog}
-          onOpenChange={setShowEditDialog}
+          onOpenChange={(open) => {
+            setShowEditDialog(open);
+            if (!open) {
+              // Clean up when dialog closes
+              setEditingItem(null);
+            }
+          }}
           onSave={handleSaveEditedItem}
           item={editingItem}
         />

@@ -17,13 +17,10 @@ import {
   ChevronRight,
   Menu,
   X,
-  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { getSupabase } from "@/lib/supabase";
-import { useToast } from "@/hooks/use-toast";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -107,19 +104,6 @@ const navigationItems = [
 
 export const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
   const location = useLocation();
-  const supabase = getSupabase();
-  const { toast } = useToast();
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (e) {
-      // ignore
-    } finally {
-      try { toast({ title: "Signed out", description: "You have been logged out." }); } catch {}
-      window.location.href = "/auth";
-    }
-  };
 
   return (
     <div className={cn(
@@ -218,9 +202,6 @@ export const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
               </div>
               <p className="text-xs text-gray-500">Version 1.0.0</p>
             </div>
-            <Button onClick={handleLogout} variant="outline" className="w-full flex items-center justify-center gap-2 text-gray-700">
-              <LogOut className="h-4 w-4" /> Logout
-            </Button>
             <div className="text-xs text-gray-400">
               © 2024 Golden Treasures
             </div>
@@ -240,19 +221,6 @@ export const Sidebar = ({ isCollapsed, onToggle }: SidebarProps) => {
 // Mobile Sidebar Component
 export const MobileSidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const location = useLocation();
-  const supabase = getSupabase();
-  const { toast } = useToast();
-
-  const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (e) {
-      // ignore
-    } finally {
-      try { toast({ title: "Signed out", description: "You have been logged out." }); } catch {}
-      window.location.href = "/auth";
-    }
-  };
 
   if (!isOpen) return null;
 
@@ -343,9 +311,6 @@ export const MobileSidebar = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
               </div>
               <p className="text-xs text-gray-500">Version 1.0.0</p>
             </div>
-            <Button onClick={handleLogout} variant="outline" className="w-full flex items-center justify-center gap-2 text-gray-700">
-              <LogOut className="h-4 w-4" /> Logout
-            </Button>
             <div className="text-xs text-gray-400">
               © 2024 Golden Treasures
             </div>
